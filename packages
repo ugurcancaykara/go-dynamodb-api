@@ -5,3 +5,7 @@
  go get -u github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute
  go get -u github.com/aws/aws-sdk-go/service/dynamodb/expression
  go get -u github.com/google/uuid
+
+
+ # after go sensor implementation
+ go get github.com/instana/go-sensor/instrumentation/instaawssdk

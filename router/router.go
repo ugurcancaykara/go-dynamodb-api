@@ -2,13 +2,22 @@ package router
 
 import (
 	"github.com/gin-gonic/gin"
+	instana "github.com/instana/go-sensor"
 	dynamodb "go-crud-api/db"
 	"net/http"
 )
 
 var db = dynamodb.InitDatabase()
+var iSensor *instana.Sensor
 
 func InitRouter() *gin.Engine {
+
+	instana.InitSensor(&instana.Options{
+		Service:           "my-movie-app",
+		LogLevel:          instana.Debug,
+		EnableAutoProfile: true,
+	})
+	iSensor = instana.NewSensor("my-movie-app-tracing")
 	r := gin.Default()
 	r.GET("/movies", getMovies)
 	r.GET("/movies/:id", getMovie)
@@ -19,6 +28,7 @@ func InitRouter() *gin.Engine {
 }
 
 func getMovies(ctx *gin.Context) {
+
 	res, err := db.GetMovies()
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{
