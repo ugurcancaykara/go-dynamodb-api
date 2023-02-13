@@ -1,0 +1,7 @@
+ go get -u github.com/aws/aws-sdk-go
+ go get -u github.com/aws/aws-sdk-go-v2/aws
+ go get -u github.com/aws/aws-sdk-go/aws/session
+ go get -u github.com/aws/aws-sdk-go/service/dynamodb
+ go get -u github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute
+ go get -u github.com/aws/aws-sdk-go/service/dynamodb/expression
+ go get -u github.com/google/uuid
