@@ -8,7 +8,7 @@ require (
 	github.com/gin-gonic/gin v1.8.2
 	github.com/google/uuid v1.3.0
 	github.com/instana/go-sensor v1.49.0
-	github.com/instana/go-sensor/instrumentation/instaawssdk v1.7.0
+	github.com/instana/go-sensor/instrumentation/instagin v1.5.0
 )
 
 require (

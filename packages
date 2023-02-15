@@ -9,3 +9,6 @@
 
  # after go sensor implementation
  go get github.com/instana/go-sensor/instrumentation/instaawssdk
+
+
+ github.com/instana/go-sensor/tree/master/instrumentation/instagin.
