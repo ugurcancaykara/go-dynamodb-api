@@ -136,7 +136,7 @@ func (db Database) UpdateMovie(movie Movie, ctx context.Context, sensor *instana
 	fmt.Println(req)
 	sp, _ := instana.SpanFromContext(req.Context())
 
-	_, err = db.client.PutItemWithContext(ctx, input)
+	_, err = db.client.PutItemWithContext(req.Context(), input)
 	if err != nil {
 		return Movie{}, err
 	}
