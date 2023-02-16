@@ -186,7 +186,7 @@ func InitDatabase(sensor *instana.Sensor) MovieService {
 	//}))
 
 	sess := session.Must(session.NewSession(&aws.Config{
-		Region: aws.String("us-west-2"),
+		Region: aws.String("eu-west-1"),
 	}))
 
 	// Initialize Instana sensor
