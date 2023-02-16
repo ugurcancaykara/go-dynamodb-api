@@ -181,11 +181,11 @@ type MovieService interface {
 }
 
 func InitDatabase(sensor *instana.Sensor) MovieService {
-	sess := session.Must(session.NewSessionWithOptions(session.Options{
-		SharedConfigState: session.SharedConfigEnable,
-	}))
+	//sess := session.Must(session.NewSessionWithOptions(session.Options{
+	//	SharedConfigState: session.SharedConfigEnable,
+	//}))
 
-	//sess := session.Must(session.NewSession(&aws.Config{}))
+	sess := session.Must(session.NewSession(&aws.Config{}))
 
 	// Initialize Instana sensor
 	//sensor := instana.NewSensor("my-dynamodb-app")
