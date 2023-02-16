@@ -13,6 +13,7 @@ import (
 	"github.com/google/uuid"
 	instana "github.com/instana/go-sensor"
 	"github.com/instana/go-sensor/instrumentation/instaawssdk"
+	"github.com/opentracing/opentracing-go"
 )
 
 type Database struct {
@@ -111,7 +112,11 @@ func newDynamoDBRequest(db Database, entityParsed map[string]*dynamodb.Attribute
 
 func (db Database) UpdateMovie(movie Movie, ctx context.Context, sensor *instana.Sensor, recorder *instana.Recorder) (Movie, error) {
 	entityParsed, err := dynamodbattribute.MarshalMap(movie)
-	parentSp := sensor.Tracer().StartSpan("testing")
+	parentSp := sensor.Tracer().StartSpan("testing", opentracing.Tags{
+		"dynamodb.op":     "get",
+		"dynamodb.table":  "test-table",
+		"dynamodb.region": "mock-region",
+	})
 
 	if err != nil {
 		return Movie{}, err
