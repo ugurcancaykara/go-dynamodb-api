@@ -11,7 +11,7 @@ import (
 var recorder = instana.NewTestRecorder()
 
 var iSensor = instana.NewSensorWithTracer(instana.NewTracerWithOptions(&instana.Options{
-	Service:           "my-movie-app-tracing",
+	Service:           "test-sensor-3",
 	EnableAutoProfile: true,
 },
 ))
