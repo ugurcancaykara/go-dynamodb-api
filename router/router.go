@@ -10,11 +10,17 @@ import (
 
 var recorder = instana.NewTestRecorder()
 
-var iSensor = instana.NewSensorWithTracer(
-	instana.NewTracerWithEverything(&instana.Options{
-		Service: "test-sensor-2",
-	}, recorder),
-)
+var iSensor = instana.NewSensorWithTracer(instana.NewTracerWithOptions(&instana.Options{
+	Service:           "my-movie-app-tracing",
+	EnableAutoProfile: true,
+},
+))
+
+//var iSensor = instana.NewSensorWithTracer(
+//	instana.NewTracerWithEverything(&instana.Options{
+//		Service: "test-sensor-2",
+//	}, recorder),
+//)
 
 // var iSensor = instana.NewSensor("test-sensor")
 var db = dynamodb.InitDatabase(iSensor)
