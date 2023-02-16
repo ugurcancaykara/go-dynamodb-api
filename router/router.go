@@ -8,8 +8,6 @@ import (
 	"net/http"
 )
 
-var recorder = instana.NewTestRecorder()
-
 var iSensor = instana.NewSensorWithTracer(instana.NewTracerWithOptions(&instana.Options{
 	Service:           "test-sensor-3",
 	EnableAutoProfile: true,
@@ -19,7 +17,7 @@ var iSensor = instana.NewSensorWithTracer(instana.NewTracerWithOptions(&instana.
 //var iSensor = instana.NewSensorWithTracer(
 //	instana.NewTracerWithEverything(&instana.Options{
 //		Service: "test-sensor-2",
-//	}, recorder),
+//	}),
 //)
 
 // var iSensor = instana.NewSensor("test-sensor")
@@ -136,7 +134,7 @@ func putMovie(ctx *gin.Context) {
 	}
 	res.Name = movie.Name
 	res.Description = movie.Description
-	res, err = db.UpdateMovie(res, ctx, iSensor, recorder)
+	res, err = db.UpdateMovie(res, ctx, iSensor)
 
 	if err != nil {
 		ctx.JSON(http.StatusNotFound, gin.H{
