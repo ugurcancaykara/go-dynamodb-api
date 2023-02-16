@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go/aws/request"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
@@ -99,8 +100,19 @@ func (db Database) GetMovie(id string) (Movie, error) {
 	return movie, nil
 }
 
-func (db Database) UpdateMovie(movie Movie, ctx context.Context) (Movie, error) {
+func newDynamoDBRequest(db Database, entityParsed map[string]*dynamodb.AttributeValue) *request.Request {
+	svc := db.client
+	req, _ := svc.PutItemRequest(&dynamodb.PutItemInput{
+		Item:      entityParsed,
+		TableName: aws.String(db.tablename),
+	})
+	return req
+}
+
+func (db Database) UpdateMovie(movie Movie, ctx context.Context, sensor *instana.Sensor, recorder *instana.Recorder) (Movie, error) {
 	entityParsed, err := dynamodbattribute.MarshalMap(movie)
+	parentSp := sensor.Tracer().StartSpan("testing")
+
 	if err != nil {
 		return Movie{}, err
 	}
@@ -109,11 +121,17 @@ func (db Database) UpdateMovie(movie Movie, ctx context.Context) (Movie, error) 
 		Item:      entityParsed,
 		TableName: aws.String(db.tablename),
 	}
+	req := newDynamoDBRequest(db, entityParsed)
+	req.SetContext(instana.ContextWithSpan(req.Context(), parentSp))
 
 	//_, err = db.client.PutItem(input)
 	//var ctx, cancel = context.WithTimeout(context.Background(), 100*time.Second)
 	//defer cancel()
+	instaawssdk.StartDynamoDBSpan(req, sensor)
+	sp, _ := instana.SpanFromContext(req.Context())
 
+	sp.Finish()
+	parentSp.Finish()
 	_, err = db.client.PutItemWithContext(ctx, input)
 	if err != nil {
 		return Movie{}, err
@@ -152,7 +170,7 @@ type MovieService interface {
 	CreateMovie(m Movie) (Movie, error)
 	GetMovies() ([]Movie, error)
 	GetMovie(id string) (Movie, error)
-	UpdateMovie(m Movie, ctx context.Context) (Movie, error)
+	UpdateMovie(m Movie, ctx context.Context, sensor *instana.Sensor, recorder *instana.Recorder) (Movie, error)
 	DeleteMovie(id string) error
 }
 

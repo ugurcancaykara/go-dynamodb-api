@@ -8,7 +8,12 @@ import (
 	"net/http"
 )
 
-var iSensor = instana.NewSensor("my-first-sensor")
+var recorder = instana.NewTestRecorder()
+var iSensor = instana.NewSensorWithTracer(
+	instana.NewTracerWithEverything(&instana.Options{}, recorder),
+)
+
+// var iSensor = instana.NewSensor("my-first-sensor")
 var db = dynamodb.InitDatabase(iSensor)
 
 //var iSensor *instana.Sensor
@@ -122,7 +127,7 @@ func putMovie(ctx *gin.Context) {
 	}
 	res.Name = movie.Name
 	res.Description = movie.Description
-	res, err = db.UpdateMovie(res, ctx)
+	res, err = db.UpdateMovie(res, ctx, iSensor, recorder)
 
 	if err != nil {
 		ctx.JSON(http.StatusNotFound, gin.H{
