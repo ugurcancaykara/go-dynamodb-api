@@ -1,6 +1,7 @@
 package db
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -9,6 +10,9 @@ import (
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
 	"github.com/aws/aws-sdk-go/service/dynamodb/expression"
 	"github.com/google/uuid"
+	instana "github.com/instana/go-sensor"
+	"github.com/instana/go-sensor/instrumentation/instaawssdk"
+	"time"
 )
 
 type Database struct {
@@ -107,7 +111,10 @@ func (db Database) UpdateMovie(movie Movie) (Movie, error) {
 		TableName: aws.String(db.tablename),
 	}
 
-	_, err = db.client.PutItem(input)
+	//_, err = db.client.PutItem(input)
+	var ctx, cancel = context.WithTimeout(context.Background(), 100*time.Second)
+	defer cancel()
+	_, err = db.client.PutItemWithContext(ctx, input)
 	if err != nil {
 		return Movie{}, err
 	}
@@ -153,6 +160,13 @@ func InitDatabase() MovieService {
 	sess := session.Must(session.NewSessionWithOptions(session.Options{
 		SharedConfigState: session.SharedConfigEnable,
 	}))
+
+	//sess := session.Must(session.NewSession(&aws.Config{}))
+
+	// Initialize Instana sensor
+	sensor := instana.NewSensor("my-dynamodb-app")
+	// Instrument aws/session.Session
+	instaawssdk.InstrumentSession(sess, sensor)
 
 	return &Database{
 		client:    dynamodb.New(sess),
