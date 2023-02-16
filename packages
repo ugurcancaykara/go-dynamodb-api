@@ -11,4 +11,7 @@
  go get github.com/instana/go-sensor/instrumentation/instaawssdk
 
 
- github.com/instana/go-sensor/tree/master/instrumentation/instagin.
+ github.com/instana/go-sensor/tree/master/instrumentation/instagin
+
+
+ go get github.com/instana/go-sensor/instrumentation/instaawssdk

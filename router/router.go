@@ -32,6 +32,16 @@ func InitRouter() *gin.Engine {
 	//},
 	//))
 
+	// collect extra HTTP headers https://www.ibm.com/docs/en/instana-observability/current?topic=go-collector-common-operations#how-to-collect-extra-http-headers
+	//instana.NewSensorWithTracer(instana.NewTracerWithOptions(&instana.Options{
+	//	Service:           "my-movie-app-tracing",
+	//	EnableAutoProfile: true,
+	//	Tracer: instana.TracerOptions{
+	//		CollectableHTTPHeaders: []string{"x-request-id","x-loadtest-id"},
+	//	},
+	//},
+	//))
+
 	r := gin.Default()
 	instagin.AddMiddleware(iSensor, r)
 	r.GET("/movies", getMovies)
