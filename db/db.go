@@ -132,7 +132,7 @@ func (db Database) UpdateMovie(movie Movie, ctx context.Context, sensor *instana
 	//_, err = db.client.PutItem(input)
 	//var ctx, cancel = context.WithTimeout(context.Background(), 100*time.Second)
 	//defer cancel()
-	//instaawssdk.StartDynamoDBSpan(req, sensor)
+	instaawssdk.StartDynamoDBSpan(req, sensor)
 	fmt.Println(req)
 	sp, _ := instana.SpanFromContext(req.Context())
 
