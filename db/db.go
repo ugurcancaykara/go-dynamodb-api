@@ -185,7 +185,9 @@ func InitDatabase(sensor *instana.Sensor) MovieService {
 	//	SharedConfigState: session.SharedConfigEnable,
 	//}))
 
-	sess := session.Must(session.NewSession(&aws.Config{}))
+	sess := session.Must(session.NewSession(&aws.Config{
+		Region: aws.String("us-west-2"),
+	}))
 
 	// Initialize Instana sensor
 	//sensor := instana.NewSensor("my-dynamodb-app")
