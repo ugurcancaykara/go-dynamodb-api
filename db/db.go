@@ -130,14 +130,13 @@ func (db Database) UpdateMovie(movie Movie, ctx context.Context, sensor *instana
 	instaawssdk.StartDynamoDBSpan(req, sensor)
 	sp, _ := instana.SpanFromContext(req.Context())
 
-	sp.Finish()
-	parentSp.Finish()
-	instaawssdk.FinalizeDynamoDBSpan(req)
 	_, err = db.client.PutItemWithContext(ctx, input)
 	if err != nil {
 		return Movie{}, err
 	}
-
+	sp.Finish()
+	parentSp.Finish()
+	instaawssdk.FinalizeDynamoDBSpan(req)
 	return movie, nil
 }
 
