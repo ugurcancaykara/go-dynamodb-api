@@ -3,7 +3,6 @@ package router
 import (
 	"github.com/gin-gonic/gin"
 	instana "github.com/instana/go-sensor"
-	"github.com/instana/go-sensor/instrumentation/instagin"
 	dynamodb "go-crud-api/db"
 	"net/http"
 )
@@ -21,9 +20,9 @@ func InitRouter() *gin.Engine {
 	//})
 	//instana.InitSensor(instana.DefaultOptions())
 
-	iSensor = instana.NewSensor(
-		"my-movie-app-tracing",
-	)
+	//iSensor = instana.NewSensor(
+	//	"my-movie-app-tracing",
+	//)
 	// Using Newsensor with options(in most cases, leaving the default configuration options in place will be enough)
 	// https://pkg.go.dev/github.com/instana/go-sensor#TracerOptions
 	//instana.NewSensorWithTracer(instana.NewTracerWithOptions(&instana.Options{
@@ -43,7 +42,7 @@ func InitRouter() *gin.Engine {
 	//))
 
 	r := gin.Default()
-	instagin.AddMiddleware(iSensor, r)
+	//instagin.AddMiddleware(iSensor, r)
 	r.GET("/movies", getMovies)
 	r.GET("/movies/:id", getMovie)
 	r.POST("/movies", postMovie)
