@@ -10,6 +10,7 @@ import (
 
 var iSensor = instana.NewSensorWithTracer(instana.NewTracerWithOptions(&instana.Options{
 	Service:           "test-sensor-3",
+	LogLevel:          instana.Debug,
 	EnableAutoProfile: true,
 },
 ))
@@ -19,8 +20,8 @@ var iSensor = instana.NewSensorWithTracer(instana.NewTracerWithOptions(&instana.
 //		Service: "test-sensor-2",
 //	}),
 //)
-
 // var iSensor = instana.NewSensor("test-sensor")
+
 var db = dynamodb.InitDatabase(iSensor)
 
 //var iSensor *instana.Sensor
