@@ -4,6 +4,8 @@ import (
 	"github.com/gin-gonic/gin"
 	instana "github.com/instana/go-sensor"
 	"github.com/instana/go-sensor/instrumentation/instagin"
+	"github.com/opentracing/opentracing-go"
+	"github.com/opentracing/opentracing-go/ext"
 	dynamodb "go-crud-api/db"
 	"net/http"
 )
@@ -14,6 +16,12 @@ var iSensor = instana.NewSensorWithTracer(instana.NewTracerWithOptions(&instana.
 	EnableAutoProfile: true,
 },
 ))
+
+var tracerX = instana.NewTracerWithOptions(&instana.Options{
+	Service:           "test-sensor-3",
+	LogLevel:          instana.Debug,
+	EnableAutoProfile: true,
+})
 
 //var iSensor = instana.NewSensorWithTracer(
 //	instana.NewTracerWithEverything(&instana.Options{
@@ -27,6 +35,8 @@ var db = dynamodb.InitDatabase(iSensor)
 //var iSensor *instana.Sensor
 
 func InitRouter() *gin.Engine {
+
+	opentracing.InitGlobalTracer(tracerX)
 
 	// If we just use initsensor and not tracer, we won't be able to trace requests.
 	//instana.InitSensor(&instana.Options{
@@ -135,7 +145,26 @@ func putMovie(ctx *gin.Context) {
 	}
 	res.Name = movie.Name
 	res.Description = movie.Description
-	res, err = db.UpdateMovie(res, ctx, iSensor)
+
+	opts := []opentracing.StartSpanOption{
+		ext.SpanKindRPCServer,
+		opentracing.Tags{
+			"http.host":     ctx.Request.Host,
+			"http.method":   ctx.Request.Method,
+			"http.protocol": ctx.Request.URL.Scheme,
+			"http.path":     ctx.Request.URL.Path,
+		},
+	}
+	wireContext, err := opentracing.GlobalTracer().Extract(
+		opentracing.HTTPHeaders,
+		opentracing.HTTPHeadersCarrier(ctx.Request.Header),
+	)
+	if err != nil {
+		opts = append(opts, ext.RPCServerOption(wireContext))
+	}
+	span := opentracing.GlobalTracer().StartSpan("g.http", opts...)
+
+	res, err = db.UpdateMovie(res, ctx, iSensor, span)
 
 	if err != nil {
 		ctx.JSON(http.StatusNotFound, gin.H{
