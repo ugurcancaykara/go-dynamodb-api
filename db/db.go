@@ -12,6 +12,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/dynamodb/expression"
 	"github.com/google/uuid"
 	instana "github.com/instana/go-sensor"
+	"github.com/instana/go-sensor/instrumentation/instaawssdk"
 )
 
 type Database struct {
@@ -195,7 +196,7 @@ func InitDatabase(sensor *instana.Sensor) MovieService {
 	// Initialize Instana sensor
 	//sensor := instana.NewSensor("my-dynamodb-app")
 	// Instrument aws/session.Session
-	//instaawssdk.InstrumentSession(sess, sensor)
+	instaawssdk.InstrumentSession(sess, sensor)
 
 	return &Database{
 		client:    dynamodb.New(sess),
