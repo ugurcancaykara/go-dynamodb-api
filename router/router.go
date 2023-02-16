@@ -9,11 +9,12 @@ import (
 )
 
 var recorder = instana.NewTestRecorder()
-var iSensor = instana.NewSensorWithTracer(
-	instana.NewTracerWithEverything(&instana.Options{}, recorder),
-)
 
-// var iSensor = instana.NewSensor("my-first-sensor")
+//var iSensor = instana.NewSensorWithTracer(
+//	instana.NewTracerWithEverything(&instana.Options{}, recorder),
+//)
+
+var iSensor = instana.NewSensor("my-first-sensor")
 var db = dynamodb.InitDatabase(iSensor)
 
 //var iSensor *instana.Sensor
