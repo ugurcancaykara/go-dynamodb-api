@@ -3,12 +3,15 @@ package router
 import (
 	"github.com/gin-gonic/gin"
 	instana "github.com/instana/go-sensor"
+	"github.com/instana/go-sensor/instrumentation/instagin"
 	dynamodb "go-crud-api/db"
 	"net/http"
 )
 
-var db = dynamodb.InitDatabase()
-var iSensor *instana.Sensor
+var iSensor = instana.NewSensor("my-first-sensor")
+var db = dynamodb.InitDatabase(iSensor)
+
+//var iSensor *instana.Sensor
 
 func InitRouter() *gin.Engine {
 
@@ -42,7 +45,7 @@ func InitRouter() *gin.Engine {
 	//))
 
 	r := gin.Default()
-	//instagin.AddMiddleware(iSensor, r)
+	instagin.AddMiddleware(iSensor, r)
 	r.GET("/movies", getMovies)
 	r.GET("/movies/:id", getMovie)
 	r.POST("/movies", postMovie)

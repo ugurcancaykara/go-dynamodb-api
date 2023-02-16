@@ -113,6 +113,7 @@ func (db Database) UpdateMovie(movie Movie, ctx context.Context) (Movie, error) 
 	//_, err = db.client.PutItem(input)
 	//var ctx, cancel = context.WithTimeout(context.Background(), 100*time.Second)
 	//defer cancel()
+
 	_, err = db.client.PutItemWithContext(ctx, input)
 	if err != nil {
 		return Movie{}, err
@@ -155,7 +156,7 @@ type MovieService interface {
 	DeleteMovie(id string) error
 }
 
-func InitDatabase() MovieService {
+func InitDatabase(sensor *instana.Sensor) MovieService {
 	sess := session.Must(session.NewSessionWithOptions(session.Options{
 		SharedConfigState: session.SharedConfigEnable,
 	}))
@@ -163,7 +164,7 @@ func InitDatabase() MovieService {
 	//sess := session.Must(session.NewSession(&aws.Config{}))
 
 	// Initialize Instana sensor
-	sensor := instana.NewSensor("my-dynamodb-app")
+	//sensor := instana.NewSensor("my-dynamodb-app")
 	// Instrument aws/session.Session
 	instaawssdk.InstrumentSession(sess, sensor)
 
