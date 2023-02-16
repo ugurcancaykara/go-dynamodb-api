@@ -16,7 +16,7 @@ var recorder = instana.NewTestRecorder()
 //	}, recorder),
 //)
 
-var iSensor = instana.NewSensor("my-first-sensor")
+var iSensor = instana.NewSensor("test-sensor")
 var db = dynamodb.InitDatabase(iSensor)
 
 //var iSensor *instana.Sensor
