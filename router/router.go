@@ -13,15 +13,25 @@ var iSensor *instana.Sensor
 
 func InitRouter() *gin.Engine {
 
+	// If we just use initsensor and not tracer, we won't be able to trace requests.
 	//instana.InitSensor(&instana.Options{
 	//	Service:           "my-movie-app",
 	//	LogLevel:          instana.Debug,
 	//	EnableAutoProfile: true,
 	//})
 	//instana.InitSensor(instana.DefaultOptions())
+
 	iSensor = instana.NewSensor(
 		"my-movie-app-tracing",
 	)
+	// Using Newsensor with options(in most cases, leaving the default configuration options in place will be enough)
+	// https://pkg.go.dev/github.com/instana/go-sensor#TracerOptions
+	//instana.NewSensorWithTracer(instana.NewTracerWithOptions(&instana.Options{
+	//	Service:           "my-movie-app-tracing",
+	//	EnableAutoProfile: true,
+	//},
+	//))
+
 	r := gin.Default()
 	instagin.AddMiddleware(iSensor, r)
 	r.GET("/movies", getMovies)
