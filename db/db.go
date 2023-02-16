@@ -139,7 +139,7 @@ func (db Database) UpdateMovie(movie Movie, ctx context.Context, sensor *instana
 	if err != nil {
 		return Movie{}, err
 	}
-	sp.Finish()
+	//sp.Finish()
 	//defer parentSp.Finish()
 	//instaawssdk.FinalizeDynamoDBSpan(req)
 	return movie, nil
