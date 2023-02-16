@@ -12,7 +12,6 @@ import (
 	"github.com/google/uuid"
 	instana "github.com/instana/go-sensor"
 	"github.com/instana/go-sensor/instrumentation/instaawssdk"
-	"time"
 )
 
 type Database struct {
@@ -100,7 +99,7 @@ func (db Database) GetMovie(id string) (Movie, error) {
 	return movie, nil
 }
 
-func (db Database) UpdateMovie(movie Movie) (Movie, error) {
+func (db Database) UpdateMovie(movie Movie, ctx context.Context) (Movie, error) {
 	entityParsed, err := dynamodbattribute.MarshalMap(movie)
 	if err != nil {
 		return Movie{}, err
@@ -112,8 +111,8 @@ func (db Database) UpdateMovie(movie Movie) (Movie, error) {
 	}
 
 	//_, err = db.client.PutItem(input)
-	var ctx, cancel = context.WithTimeout(context.Background(), 100*time.Second)
-	defer cancel()
+	//var ctx, cancel = context.WithTimeout(context.Background(), 100*time.Second)
+	//defer cancel()
 	_, err = db.client.PutItemWithContext(ctx, input)
 	if err != nil {
 		return Movie{}, err
@@ -152,7 +151,7 @@ type MovieService interface {
 	CreateMovie(m Movie) (Movie, error)
 	GetMovies() ([]Movie, error)
 	GetMovie(id string) (Movie, error)
-	UpdateMovie(m Movie) (Movie, error)
+	UpdateMovie(m Movie, ctx context.Context) (Movie, error)
 	DeleteMovie(id string) error
 }
 

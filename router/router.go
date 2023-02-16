@@ -120,7 +120,7 @@ func putMovie(ctx *gin.Context) {
 	}
 	res.Name = movie.Name
 	res.Description = movie.Description
-	res, err = db.UpdateMovie(res)
+	res, err = db.UpdateMovie(res, ctx)
 
 	if err != nil {
 		ctx.JSON(http.StatusNotFound, gin.H{
