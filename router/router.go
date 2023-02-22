@@ -4,8 +4,6 @@ import (
 	"github.com/gin-gonic/gin"
 	instana "github.com/instana/go-sensor"
 	"github.com/instana/go-sensor/instrumentation/instagin"
-	"github.com/opentracing/opentracing-go"
-	"github.com/opentracing/opentracing-go/ext"
 	dynamodb "go-crud-api/db"
 	"net/http"
 )
@@ -17,55 +15,9 @@ var iSensor = instana.NewSensorWithTracer(instana.NewTracerWithOptions(&instana.
 },
 ))
 
-var tracerX = instana.NewTracerWithOptions(&instana.Options{
-	Service:           "test-sensor-3",
-	LogLevel:          instana.Debug,
-	EnableAutoProfile: true,
-})
-
-//var iSensor = instana.NewSensorWithTracer(
-//	instana.NewTracerWithEverything(&instana.Options{
-//		Service: "test-sensor-2",
-//	}),
-//)
-// var iSensor = instana.NewSensor("test-sensor")
-
 var db = dynamodb.InitDatabase(iSensor)
 
-//var iSensor *instana.Sensor
-
 func InitRouter() *gin.Engine {
-
-	opentracing.InitGlobalTracer(tracerX)
-
-	// If we just use initsensor and not tracer, we won't be able to trace requests.
-	//instana.InitSensor(&instana.Options{
-	//	Service:           "my-movie-app",
-	//	LogLevel:          instana.Debug,
-	//	EnableAutoProfile: true,
-	//})
-	//instana.InitSensor(instana.DefaultOptions())
-
-	//iSensor = instana.NewSensor(
-	//	"my-movie-app-tracing",
-	//)
-	// Using Newsensor with options(in most cases, leaving the default configuration options in place will be enough)
-	// https://pkg.go.dev/github.com/instana/go-sensor#TracerOptions
-	//instana.NewSensorWithTracer(instana.NewTracerWithOptions(&instana.Options{
-	//	Service:           "my-movie-app-tracing",
-	//	EnableAutoProfile: true,
-	//},
-	//))
-
-	// collect extra HTTP headers https://www.ibm.com/docs/en/instana-observability/current?topic=go-collector-common-operations#how-to-collect-extra-http-headers
-	//instana.NewSensorWithTracer(instana.NewTracerWithOptions(&instana.Options{
-	//	Service:           "my-movie-app-tracing",
-	//	EnableAutoProfile: true,
-	//	Tracer: instana.TracerOptions{
-	//		CollectableHTTPHeaders: []string{"x-request-id","x-loadtest-id"},
-	//	},
-	//},
-	//))
 
 	r := gin.Default()
 	instagin.AddMiddleware(iSensor, r)
@@ -146,25 +98,7 @@ func putMovie(ctx *gin.Context) {
 	res.Name = movie.Name
 	res.Description = movie.Description
 
-	opts := []opentracing.StartSpanOption{
-		ext.SpanKindRPCServer,
-		opentracing.Tags{
-			"http.host":     ctx.Request.Host,
-			"http.method":   ctx.Request.Method,
-			"http.protocol": ctx.Request.URL.Scheme,
-			"http.path":     ctx.Request.URL.Path,
-		},
-	}
-	wireContext, err := opentracing.GlobalTracer().Extract(
-		opentracing.HTTPHeaders,
-		opentracing.HTTPHeadersCarrier(ctx.Request.Header),
-	)
-	if err != nil {
-		opts = append(opts, ext.RPCServerOption(wireContext))
-	}
-	span := opentracing.GlobalTracer().StartSpan("g.http", opts...)
-
-	res, err = db.UpdateMovie(res, ctx, iSensor, span)
+	res, err = db.UpdateMovie(res, ctx, iSensor)
 
 	if err != nil {
 		ctx.JSON(http.StatusNotFound, gin.H{

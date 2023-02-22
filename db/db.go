@@ -110,7 +110,7 @@ func newDynamoDBRequest(db Database, entityParsed map[string]*dynamodb.Attribute
 	return req
 }
 
-func (db Database) UpdateMovie(movie Movie, ctx context.Context, sensor *instana.Sensor, openParentSp opentracing.Span) (Movie, error) {
+func (db Database) UpdateMovie(movie Movie, ctx context.Context, sensor *instana.Sensor) (Movie, error) {
 	entityParsed, err := dynamodbattribute.MarshalMap(movie)
 	parentSp := sensor.Tracer().StartSpan("testing", opentracing.Tags{
 		"dynamodb.op":     "get",
@@ -172,7 +172,7 @@ type MovieService interface {
 	CreateMovie(m Movie) (Movie, error)
 	GetMovies() ([]Movie, error)
 	GetMovie(id string) (Movie, error)
-	UpdateMovie(m Movie, ctx context.Context, sensor *instana.Sensor, sp opentracing.Span) (Movie, error)
+	UpdateMovie(m Movie, ctx context.Context, sensor *instana.Sensor) (Movie, error)
 	DeleteMovie(id string) error
 }
 
@@ -190,9 +190,6 @@ func InitDatabase(sensor *instana.Sensor) MovieService {
 		Profile: "default",
 	})
 
-	// Initialize Instana sensor
-	//sensor := instana.NewSensor("my-dynamodb-app")
-	// Instrument aws/session.Session
 	instaawssdk.InstrumentSession(sess, sensor)
 
 	return &Database{
