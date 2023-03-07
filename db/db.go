@@ -112,6 +112,7 @@ func newDynamoDBRequest(db Database, entityParsed map[string]*dynamodb.Attribute
 
 func (db Database) UpdateMovie(movie Movie, ctx context.Context, sensor *instana.Sensor) (Movie, error) {
 	entityParsed, err := dynamodbattribute.MarshalMap(movie)
+
 	parentSp := sensor.Tracer().StartSpan("testing", opentracing.Tags{
 		"dynamodb.op":     "get",
 		"dynamodb.table":  "test-table",
@@ -127,7 +128,7 @@ func (db Database) UpdateMovie(movie Movie, ctx context.Context, sensor *instana
 		TableName: aws.String(db.tablename),
 	}
 	req := newDynamoDBRequest(db, entityParsed)
-	req.SetContext(instana.ContextWithSpan(req.Context(), parentSp))
+	//req.SetContext(instana.ContextWithSpan(req.Context(), parentSp))
 	instaawssdk.StartDynamoDBSpan(req, sensor)
 	//fmt.Println(req)
 	sp, _ := instana.SpanFromContext(req.Context())
