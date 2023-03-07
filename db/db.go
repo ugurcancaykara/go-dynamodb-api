@@ -13,7 +13,6 @@ import (
 	"github.com/google/uuid"
 	instana "github.com/instana/go-sensor"
 	"github.com/instana/go-sensor/instrumentation/instaawssdk"
-	"github.com/opentracing/opentracing-go"
 )
 
 type Database struct {
@@ -113,11 +112,11 @@ func newDynamoDBRequest(db Database, entityParsed map[string]*dynamodb.Attribute
 func (db Database) UpdateMovie(movie Movie, ctx context.Context, sensor *instana.Sensor) (Movie, error) {
 	entityParsed, err := dynamodbattribute.MarshalMap(movie)
 
-	parentSp := sensor.Tracer().StartSpan("testing", opentracing.Tags{
-		"dynamodb.op":     "get",
-		"dynamodb.table":  "test-table",
-		"dynamodb.region": "mock-region",
-	})
+	//parentSp := sensor.Tracer().StartSpan("testing", opentracing.Tags{
+	//	"dynamodb.op":     "get",
+	//	"dynamodb.table":  "test-table",
+	//	"dynamodb.region": "mock-region",
+	//})
 
 	if err != nil {
 		return Movie{}, err
@@ -128,17 +127,17 @@ func (db Database) UpdateMovie(movie Movie, ctx context.Context, sensor *instana
 		TableName: aws.String(db.tablename),
 	}
 	req := newDynamoDBRequest(db, entityParsed)
-	req.SetContext(instana.ContextWithSpan(ctx, parentSp))
+	//req.SetContext(instana.ContextWithSpan(ctx, parentSp))
 	instaawssdk.StartDynamoDBSpan(req, sensor)
 	//fmt.Println(req)
-	sp, _ := instana.SpanFromContext(req.Context())
+	//sp, _ := instana.SpanFromContext(req.Context())
 
 	_, err = db.client.PutItemWithContext(req.Context(), input)
 	if err != nil {
 		return Movie{}, err
 	}
-	defer sp.Finish()
-	defer parentSp.Finish()
+	//defer sp.Finish()
+	//defer parentSp.Finish()
 	instaawssdk.FinalizeDynamoDBSpan(req)
 	return movie, nil
 }
