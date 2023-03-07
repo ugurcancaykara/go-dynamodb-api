@@ -1,19 +1,50 @@
 package router
 
 import (
+	"context"
 	"github.com/gin-gonic/gin"
 	instana "github.com/instana/go-sensor"
+	"github.com/instana/go-sensor/acceptor"
+	"github.com/instana/go-sensor/autoprofile"
 	"github.com/instana/go-sensor/instrumentation/instagin"
 	dynamodb "go-crud-api/db"
 	"net/http"
 )
 
-var iSensor = instana.NewSensorWithTracer(instana.NewTracerWithOptions(&instana.Options{
-	Service:           "test-sensor-3",
-	LogLevel:          instana.Debug,
-	EnableAutoProfile: true,
-},
-))
+//var iSensor = instana.NewSensorWithTracer(instana.NewTracerWithOptions(&instana.Options{
+//	Service:           "test-sensor-3",
+//	LogLevel:          instana.Debug,
+//	EnableAutoProfile: true,
+//},
+//))
+
+type alwaysReadyClient struct{}
+
+func (alwaysReadyClient) Ready() bool                                       { return true }
+func (alwaysReadyClient) SendMetrics(data acceptor.Metrics) error           { return nil }
+func (alwaysReadyClient) SendEvent(event *instana.EventData) error          { return nil }
+func (alwaysReadyClient) SendSpans(spans []instana.Span) error              { return nil }
+func (alwaysReadyClient) SendProfiles(profiles []autoprofile.Profile) error { return nil }
+func (alwaysReadyClient) Flush(context.Context) error                       { return nil }
+
+var recorder = instana.NewTestRecorder()
+var iSensor = instana.NewSensorWithTracer(
+	instana.NewTracerWithEverything(&instana.Options{
+		Service:           "test-sensor-4",
+		LogLevel:          instana.Debug,
+		EnableAutoProfile: true,
+		AgentClient:       alwaysReadyClient{}},
+		recorder,
+	),
+)
+
+//
+//var iSensor = instana.NewSensorWithTracer(instana.NewTracerWithOptions(&instana.Options{
+//	Service:           "test-sensor-3",
+//	LogLevel:          instana.Debug,
+//	EnableAutoProfile: true,
+//},
+//))
 
 var db = dynamodb.InitDatabase(iSensor)
 
