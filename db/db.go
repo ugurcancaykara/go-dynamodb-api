@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/request"
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -20,7 +21,7 @@ type Database struct {
 	tablename string
 }
 
-func (db Database) CreateMovie(movie Movie) (Movie, error) {
+func (db Database) CreateMovie(ctx context.Context, movie Movie) (Movie, error) {
 	movie.Id = uuid.New().String()
 	entityParsed, err := dynamodbattribute.MarshalMap(movie)
 	if err != nil {
@@ -32,7 +33,7 @@ func (db Database) CreateMovie(movie Movie) (Movie, error) {
 		TableName: aws.String(db.tablename),
 	}
 
-	_, err = db.client.PutItem(input)
+	_, err = db.client.PutItemWithContext(ctx, input)
 	if err != nil {
 		return Movie{}, err
 	}
@@ -40,12 +41,13 @@ func (db Database) CreateMovie(movie Movie) (Movie, error) {
 	return movie, nil
 }
 
-func (db Database) GetMovies() ([]Movie, error) {
+func (db Database) GetMovies(ctx context.Context) ([]Movie, error) {
 	movies := []Movie{}
 	filt := expression.Name("Id").AttributeNotExists()
 	proj := expression.NamesList(
 		expression.Name("id"),
 		expression.Name("name"),
+		expression.Name("description"),
 	)
 	expr, err := expression.NewBuilder().WithFilter(filt).WithProjection(proj).Build()
 	if err != nil {
@@ -58,7 +60,8 @@ func (db Database) GetMovies() ([]Movie, error) {
 		ProjectionExpression:      expr.Projection(),
 		TableName:                 aws.String(db.tablename),
 	}
-	result, err := db.client.Scan(params)
+
+	result, err := db.client.ScanWithContext(ctx, params)
 
 	if err != nil {
 
@@ -75,8 +78,8 @@ func (db Database) GetMovies() ([]Movie, error) {
 	return movies, nil
 }
 
-func (db Database) GetMovie(id string) (Movie, error) {
-	result, err := db.client.GetItem(&dynamodb.GetItemInput{
+func (db Database) GetMovie(ctx context.Context, id string) (Movie, error) {
+	result, err := db.client.GetItemWithContext(ctx, &dynamodb.GetItemInput{
 		TableName: aws.String(db.tablename),
 		Key: map[string]*dynamodb.AttributeValue{
 			"id": {
@@ -112,11 +115,11 @@ func newDynamoDBRequest(db Database, entityParsed map[string]*dynamodb.Attribute
 func (db Database) UpdateMovie(movie Movie, ctx context.Context, sensor *instana.Sensor) (Movie, error) {
 	entityParsed, err := dynamodbattribute.MarshalMap(movie)
 
-	//parentSp := sensor.Tracer().StartSpan("testing", opentracing.Tags{
-	//	"dynamodb.op":     "get",
-	//	"dynamodb.table":  "test-table",
-	//	"dynamodb.region": "mock-region",
-	//})
+	parentSp := sensor.Tracer().StartSpan("testing", opentracing.Tags{
+		"dynamodb.op":     "get",
+		"dynamodb.table":  "test-table",
+		"dynamodb.region": "mock-region",
+	})
 
 	if err != nil {
 		return Movie{}, err
@@ -127,22 +130,24 @@ func (db Database) UpdateMovie(movie Movie, ctx context.Context, sensor *instana
 		TableName: aws.String(db.tablename),
 	}
 	req := newDynamoDBRequest(db, entityParsed)
-	//req.SetContext(instana.ContextWithSpan(ctx, parentSp))
+
+	req.SetContext(instana.ContextWithSpan(req.Context(), parentSp))
 	instaawssdk.StartDynamoDBSpan(req, sensor)
 	//fmt.Println(req)
-	//sp, _ := instana.SpanFromContext(req.Context())
+	sp, _ := instana.SpanFromContext(req.Context())
 
 	_, err = db.client.PutItemWithContext(req.Context(), input)
 	if err != nil {
 		return Movie{}, err
 	}
-	//defer sp.Finish()
-	//defer parentSp.Finish()
+
+	defer sp.Finish()
+	defer parentSp.Finish()
 	instaawssdk.FinalizeDynamoDBSpan(req)
 	return movie, nil
 }
 
-func (db Database) DeleteMovie(id string) error {
+func (db Database) DeleteMovie(ctx context.Context, id string) error {
 	input := &dynamodb.DeleteItemInput{
 		Key: map[string]*dynamodb.AttributeValue{
 			"id": {
@@ -152,7 +157,7 @@ func (db Database) DeleteMovie(id string) error {
 		TableName: aws.String(db.tablename),
 	}
 
-	res, err := db.client.DeleteItem(input)
+	res, err := db.client.DeleteItemWithContext(ctx, input)
 	if res == nil {
 		return errors.New(fmt.Sprintf("No movie to delete: %s", err))
 	}
@@ -169,11 +174,11 @@ type Movie struct {
 }
 
 type MovieService interface {
-	CreateMovie(m Movie) (Movie, error)
-	GetMovies() ([]Movie, error)
-	GetMovie(id string) (Movie, error)
+	CreateMovie(ctx context.Context, m Movie) (Movie, error)
+	GetMovies(ctx context.Context) ([]Movie, error)
+	GetMovie(ctx context.Context, id string) (Movie, error)
 	UpdateMovie(m Movie, ctx context.Context, sensor *instana.Sensor) (Movie, error)
-	DeleteMovie(id string) error
+	DeleteMovie(ctx context.Context, id string) error
 }
 
 func InitDatabase(sensor *instana.Sensor) MovieService {
@@ -185,15 +190,17 @@ func InitDatabase(sensor *instana.Sensor) MovieService {
 	//	Region: aws.String("eu-west-1"),
 	//}))
 
-	sess, _ := session.NewSessionWithOptions(session.Options{
-		Config:  aws.Config{Region: aws.String("eu-west-1")},
+	sess := session.Must(session.NewSessionWithOptions(session.Options{
+		// Note: Please use the appropriate region for testing.
+		Config:  aws.Config{Region: aws.String("us-east-2")},
 		Profile: "default",
-	})
+	}))
 
 	instaawssdk.InstrumentSession(sess, sensor)
 
 	return &Database{
-		client:    dynamodb.New(sess),
-		tablename: "Movies",
+		client: dynamodb.New(sess),
+		// Note: Please use the appropriate database for testing.
+		tablename: "go-sensor-movies",
 	}
 }
