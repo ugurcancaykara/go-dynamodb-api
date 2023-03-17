@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/opentracing/opentracing-go"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/request"
@@ -192,7 +193,7 @@ func InitDatabase(sensor *instana.Sensor) MovieService {
 
 	sess := session.Must(session.NewSessionWithOptions(session.Options{
 		// Note: Please use the appropriate region for testing.
-		Config:  aws.Config{Region: aws.String("us-east-2")},
+		Config:  aws.Config{Region: aws.String("eu-west-1")},
 		Profile: "default",
 	}))
 
@@ -201,6 +202,6 @@ func InitDatabase(sensor *instana.Sensor) MovieService {
 	return &Database{
 		client: dynamodb.New(sess),
 		// Note: Please use the appropriate database for testing.
-		tablename: "go-sensor-movies",
+		tablename: "Movies",
 	}
 }
