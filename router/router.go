@@ -1,15 +1,27 @@
 package router
 
 import (
-	"github.com/gin-gonic/gin"
-	dynamodb "go-crud-api/db"
 	"net/http"
+
+	"github.com/gin-gonic/gin"
+	instana "github.com/instana/go-sensor"
+	"github.com/instana/go-sensor/instrumentation/instagin"
+	dynamodb "go-crud-api/db"
 )
 
-var db = dynamodb.InitDatabase()
+var iSensor = instana.NewSensorWithTracer(instana.NewTracerWithOptions(&instana.Options{
+	Service:           "test-sensor-3",
+	LogLevel:          instana.Debug,
+	EnableAutoProfile: true,
+},
+))
+
+var db = dynamodb.InitDatabase(iSensor)
 
 func InitRouter() *gin.Engine {
+
 	r := gin.Default()
+	instagin.AddMiddleware(iSensor, r)
 	r.GET("/movies", getMovies)
 	r.GET("/movies/:id", getMovie)
 	r.POST("/movies", postMovie)
@@ -19,7 +31,10 @@ func InitRouter() *gin.Engine {
 }
 
 func getMovies(ctx *gin.Context) {
-	res, err := db.GetMovies()
+
+	c := ctx.Request.Context()
+
+	res, err := db.GetMovies(c)
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{
 			"error": err.Error(),
@@ -33,7 +48,7 @@ func getMovies(ctx *gin.Context) {
 
 func getMovie(ctx *gin.Context) {
 	id := ctx.Param("id")
-	res, err := db.GetMovie(id)
+	res, err := db.GetMovie(ctx.Request.Context(), id)
 	if err != nil {
 		ctx.JSON(http.StatusNotFound, gin.H{
 			"error": err.Error(),
@@ -53,7 +68,7 @@ func postMovie(ctx *gin.Context) {
 		})
 		return
 	}
-	res, err := db.CreateMovie(movie)
+	res, err := db.CreateMovie(ctx.Request.Context(), movie)
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{
 			"error": err.Error(),
@@ -76,7 +91,7 @@ func putMovie(ctx *gin.Context) {
 	}
 
 	id := ctx.Param("id")
-	res, err := db.GetMovie(id)
+	res, err := db.GetMovie(ctx.Request.Context(), id)
 	if err != nil {
 		ctx.JSON(http.StatusNotFound, gin.H{
 			"error": err.Error(),
@@ -85,7 +100,8 @@ func putMovie(ctx *gin.Context) {
 	}
 	res.Name = movie.Name
 	res.Description = movie.Description
-	res, err = db.UpdateMovie(res)
+
+	res, err = db.UpdateMovie(res, ctx, iSensor)
 
 	if err != nil {
 		ctx.JSON(http.StatusNotFound, gin.H{
@@ -100,7 +116,7 @@ func putMovie(ctx *gin.Context) {
 
 func deleteMovie(ctx *gin.Context) {
 	id := ctx.Param("id")
-	err := db.DeleteMovie(id)
+	err := db.DeleteMovie(ctx.Request.Context(), id)
 	if err != nil {
 		ctx.JSON(http.StatusNotFound, gin.H{
 			"error": err.Error(),
